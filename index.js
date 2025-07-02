@@ -1,40 +1,70 @@
-const titleInput = document.getElementById('note-title');
-const contentInput = document.getElementById('note-content');
-const notesList = document.getElementById('notes-list');
+let notes = JSON.parse(localStorage.getItem("notes")) || [];
+let editIndex = null;
 
-let notes = JSON.parse(localStorage.getItem('notes') || '[]');
-
-function displayNotes() {
-  notesList.innerHTML = '';
+function renderNotes() {
+  const container = document.getElementById("notes-container");
+  container.innerHTML = "";
   notes.forEach((note, index) => {
-    const noteDiv = document.createElement('div');
-    noteDiv.className = 'note';
-    noteDiv.innerHTML = `
-      <h3>${note.title}</h3>
-      <p>${note.content}</p>
-      <button onclick="deleteNote(${index})">Delete</button>
-    `;
-    notesList.appendChild(noteDiv);
+    const noteDiv = document.createElement("div");
+    noteDiv.className = "note";
+
+    const title = document.createElement("h3");
+    title.textContent = note.title;
+
+    const body = document.createElement("p");
+    body.textContent = note.body;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.onclick = () => deleteNote(index);
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "edit-btn";
+    editBtn.innerHTML = "✏️";
+    editBtn.onclick = () => editNote(index);
+
+    noteDiv.appendChild(title);
+    noteDiv.appendChild(body);
+    noteDiv.appendChild(deleteBtn);
+    noteDiv.appendChild(editBtn);
+
+    container.appendChild(noteDiv);
   });
 }
 
 function saveNote() {
-  const title = titleInput.value.trim();
-  const content = contentInput.value.trim();
-  if (!title && !content) return;
+  const title = document.getElementById("note-title").value.trim();
+  const body = document.getElementById("note-body").value.trim();
+  if (!title || !body) return alert("Please fill out both fields.");
 
-  notes.push({ title, content });
-  localStorage.setItem('notes', JSON.stringify(notes));
-  titleInput.value = '';
-  contentInput.value = '';
-  displayNotes();
+  if (editIndex !== null) {
+    notes[editIndex] = { title, body };
+    editIndex = null;
+  } else {
+    notes.push({ title, body });
+  }
+
+  localStorage.setItem("notes", JSON.stringify(notes));
+  document.getElementById("note-title").value = "";
+  document.getElementById("note-body").value = "";
+  renderNotes();
 }
 
 function deleteNote(index) {
-  notes.splice(index, 1);
-  localStorage.setItem('notes', JSON.stringify(notes));
-  displayNotes();
+  if (confirm("Are you sure you want to delete this note?")) {
+    notes.splice(index, 1);
+    localStorage.setItem("notes", JSON.stringify(notes));
+    renderNotes();
+  }
 }
 
+function editNote(index) {
+  const note = notes[index];
+  document.getElementById("note-title").value = note.title;
+  document.getElementById("note-body").value = note.body;
+  editIndex = index;
+}
 
-displayNotes();
+// Load on startup
+renderNotes();
